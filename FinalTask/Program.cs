@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using System.Configuration;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
+using Sdl.Sdlx.ManagedFramework;
 
 namespace FinalTask
 {
@@ -51,7 +52,7 @@ namespace FinalTask
 
                 string archivePatternJobID = "[0-9]+_";
                 string archiveJobID;
-                ZipArchive archive;
+                //ZipArchive archive;
 
                 foreach (string wrongFile in wrongFiles)
                 {
@@ -60,18 +61,20 @@ namespace FinalTask
                     archiveJobID = archiveMatches[0].ToString().Replace("_","");
                     if (wrongFile.Contains(jobID))
                     {
-                        archive = ZipFile.Open(wrongFile, ZipArchiveMode.Update);
-                        foreach (var entry in archive.Entries)
+                        using (FileStream zipToOpen = new FileStream(wrongFile, FileMode.Open))
                         {
-                            if (entry.FullName.Contains($"TGT/{sourceLang}_{targetFolderName}/{xliffName}"))
+                            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
                             {
-                                Console.WriteLine("Uwaga, działam!");
-                                //archive.Dispose();
-                                //archive = ZipFile.Open(wrongFile, ZipArchiveMode.Update);
-                                entry.Delete();
-                                //archive.CreateEntryFromFile(correctfile, $"TGT/{sourceLang}_{targetFolderName}/{xliffName}");
-                                //archive.Dispose();
-                                break;
+                                foreach (var entry in archive.Entries)
+                                {
+                                    if (entry.FullName.Contains($"TGT/{sourceLang}_{targetFolderName}/{xliffName}"))
+                                    {
+                                        Console.WriteLine("Uwaga, działam!");
+                                        entry.Delete();
+                                        archive.CreateEntryFromFile(correctfile, $"TGT/{sourceLang}_{targetFolderName}/{xliffName}");
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
